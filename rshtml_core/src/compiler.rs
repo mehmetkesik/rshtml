@@ -80,7 +80,7 @@ impl Compiler {
             Node::RustExprParen(expr, is_escaped, _) => RustExprParenCompiler::compile(self, expr, is_escaped),
             Node::MatchExpr((name, _), arms, _) => MatchExprCompiler::compile(self, name, arms),
             Node::RustExpr(exprs, _) => RustExprCompiler::compile(self, exprs),
-            Node::SectionDirective((name, position), (content, _), _) => SectionDirectiveCompiler::compile(self, name, content,position),
+            Node::SectionDirective((name, position), (content, _), _) => SectionDirectiveCompiler::compile(self, name, content, position),
             Node::SectionBlock((name, _), content, _) => SectionBlockCompiler::compile(self, name, content),
             Node::RenderBody(_) => RenderBodyCompiler::compile(self),
             Node::Component((name, _), parameters, body, _) => ComponentCompiler::compile(self, name, parameters, body),

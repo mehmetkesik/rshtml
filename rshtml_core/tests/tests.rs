@@ -7,13 +7,7 @@ use std::str::FromStr;
 use syn::__private::Span;
 use tempfile::tempdir;
 
-fn prepare(
-    struct_name: &str,
-    template_path: &str,
-    fields: TokenStream,
-    values: TokenStream,
-    functions: TokenStream,
-) -> std::io::Result<()> {
+fn prepare(struct_name: &str, template_path: &str, fields: TokenStream, values: TokenStream, functions: TokenStream) -> std::io::Result<()> {
     let struct_name_ts = TokenStream::from_str(struct_name).unwrap();
     let ident = syn::Ident::new(struct_name, Span::call_site());
     let ts = process_template(template_path.to_string(), &ident);
@@ -59,13 +53,7 @@ fn prepare(
 
 #[test]
 pub fn test_empty() -> std::io::Result<()> {
-    prepare(
-        "EmptyPage",
-        "empty.rs.html",
-        quote! {},
-        quote! {},
-        quote! {},
-    )
+    prepare("EmptyPage", "empty.rs.html", quote! {}, quote! {}, quote! {})
 }
 
 #[test]
@@ -139,13 +127,7 @@ pub fn test_match() -> std::io::Result<()> {
 
 #[test]
 pub fn test_comment() -> std::io::Result<()> {
-    prepare(
-        "CommentPage",
-        "comment.rs.html",
-        quote! {},
-        quote! {},
-        quote! {},
-    )
+    prepare("CommentPage", "comment.rs.html", quote! {}, quote! {}, quote! {})
 }
 
 #[test]
