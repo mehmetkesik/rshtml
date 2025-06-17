@@ -1,5 +1,6 @@
 use crate::Node;
 use crate::compiler::Compiler;
+use crate::node::Position;
 use anyhow::{Result, anyhow};
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -8,10 +9,10 @@ use std::str::FromStr;
 pub struct RustExprCompiler;
 
 impl RustExprCompiler {
-    pub fn compile(compiler: &mut Compiler, exprs: &Vec<(String, Vec<Node>)>) -> Result<TokenStream> {
+    pub fn compile(compiler: &mut Compiler, exprs: &Vec<((String, Position), Vec<Node>)>) -> Result<TokenStream> {
         let mut ts = TokenStream::new();
 
-        for (expr, inner_nodes) in exprs {
+        for ((expr, _), inner_nodes) in exprs {
             let mut inner_ts = TokenStream::new();
             for inner_node in inner_nodes {
                 let its = compiler.compile(inner_node)?;

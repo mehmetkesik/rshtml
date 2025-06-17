@@ -1,5 +1,5 @@
 ﻿use crate::Node;
-use crate::node::{ComponentParameter, ComponentParameterValue};
+use crate::node::{ComponentParameter, ComponentParameterValue, Position};
 use crate::parser::component::ComponentParser;
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use pest::error::{Error, ErrorVariant};
@@ -10,6 +10,8 @@ pub struct ComponentTagParser;
 impl IParser for ComponentTagParser {
     fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
+        let position = Position::from(&pair);
+
         let mut inner_pairs = pair.into_inner();
         let component_name_pair = inner_pairs.find(|p| p.as_rule() == Rule::component_tag_name).ok_or(Error::new_from_span(
             ErrorVariant::ParsingError {
@@ -18,12 +20,15 @@ impl IParser for ComponentTagParser {
             },
             pair_span,
         ))?;
+        let component_name_position = Position::from(&component_name_pair);
         let component_name = component_name_pair.as_str().to_string();
 
         let component_parameter_pairs = inner_pairs.clone().filter(|p| p.as_rule() == Rule::attribute);
 
-        let mut component_parameters = Vec::new();
+        let mut component_parameters: Vec<(ComponentParameter, Position)> = Vec::new();
         for pair in component_parameter_pairs {
+            let component_parameter_position = Position::from(&pair);
+
             let pair_name = pair
                 .clone()
                 .into_inner()
@@ -43,7 +48,7 @@ impl IParser for ComponentTagParser {
 
             let name = pair_name.as_str().to_string();
 
-            component_parameters.push(ComponentParameter { name, value });
+            component_parameters.push((ComponentParameter { name, value }, component_parameter_position));
         }
 
         let body = match inner_pairs.find(|x| x.as_rule() == Rule::tag_template) {
@@ -51,6 +56,6 @@ impl IParser for ComponentTagParser {
             None => vec![],
         };
 
-        Ok(Node::Component(component_name, component_parameters, body))
+        Ok(Node::Component((component_name, component_name_position), component_parameters, body, position))
     }
 }

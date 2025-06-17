@@ -1,6 +1,6 @@
 use crate::Node;
 use crate::compiler::Compiler;
-use crate::node::{ComponentParameter, ComponentParameterValue};
+use crate::node::{ComponentParameter, ComponentParameterValue, Position};
 use anyhow::{Result, anyhow};
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -10,13 +10,13 @@ use std::str::FromStr;
 pub struct ComponentCompiler;
 
 impl ComponentCompiler {
-    pub fn compile(compiler: &mut Compiler, name: &str, parameters: &Vec<ComponentParameter>, body: &[Node]) -> Result<TokenStream> {
+    pub fn compile(compiler: &mut Compiler, name: &str, parameters: &Vec<(ComponentParameter, Position)>, body: &[Node]) -> Result<TokenStream> {
         let component_node = compiler.components.get(name).ok_or(anyhow!("Component {} not found", name))?;
         let component_node = component_node.clone();
 
         let mut token_stream = TokenStream::new();
 
-        for parameter in parameters {
+        for (parameter, position) in parameters {
             let name_ts = TokenStream::from_str(&parameter.name).map_err(|err| anyhow!("Lex Error: {}", err))?;
 
             let parameter_ts = match &parameter.value {
@@ -38,7 +38,7 @@ impl ComponentCompiler {
                     quote! {let #name_ts = #expr_ts;}
                 }
                 ComponentParameterValue::Block(value) => {
-                    let block_ts = compiler.compile(&Node::Template(value.clone()))?;
+                    let block_ts = compiler.compile(&Node::Template(value.clone(), position.to_owned()))?;
                     quote! {
                         let mut #name_ts = String::new();
                         (|__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#block_ts Ok(())})(&mut #name_ts)?;
@@ -49,7 +49,7 @@ impl ComponentCompiler {
             token_stream.extend(parameter_ts);
         }
 
-        let body_ts = compiler.compile(&Node::Template(body.to_owned()))?;
+        let body_ts = compiler.compile(&Node::Template(body.to_owned(), Position::default()))?;
         let body_ts = quote! {let child_content = |__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#body_ts  Ok(())};};
 
         token_stream.extend(body_ts);

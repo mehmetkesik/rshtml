@@ -1,5 +1,5 @@
 ﻿use crate::Node;
-use crate::node::SectionDirectiveContent;
+use crate::node::{Position, SectionDirectiveContent};
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::traits::IsEscaped;
 use pest::error::{Error, ErrorVariant};
@@ -10,6 +10,8 @@ pub struct SectionDirectiveParser;
 impl IParser for SectionDirectiveParser {
     fn parse(_: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
+        let position = Position::from(&pair);
+
         let mut pairs = pair
             .clone()
             .into_inner()
@@ -17,6 +19,7 @@ impl IParser for SectionDirectiveParser {
 
         match (pairs.next(), pairs.next()) {
             (Some(name), Some(value)) => {
+                let value_position = Position::from(&value);
                 let value_pair = match value.as_rule() {
                     Rule::string_line => {
                         let value = value.as_str().trim_matches('"').trim_matches('\'').to_string();
@@ -29,9 +32,10 @@ impl IParser for SectionDirectiveParser {
                     _ => unreachable!(),
                 };
 
+                let name_position = Position::from(&name);
                 let name = name.as_str().trim_matches('"').trim_matches('\'').to_string();
 
-                Ok(Node::SectionDirective(name, value_pair))
+                Ok(Node::SectionDirective((name, name_position), (value_pair, value_position), position))
             }
             _ => Err(Box::new(Error::new_from_span(
                 ErrorVariant::CustomError {

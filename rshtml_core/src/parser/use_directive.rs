@@ -1,4 +1,5 @@
 ﻿use crate::Node;
+use crate::node::Position;
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
@@ -9,6 +10,7 @@ pub struct UseDirectiveParser;
 impl IParser for UseDirectiveParser {
     fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
+        let position = Position::from(&pair);
 
         let mut inner_pairs = pair.into_inner();
         let import_path_str = inner_pairs.find(|p| p.as_rule() == Rule::string_line).ok_or(Error::new_from_span(
@@ -18,6 +20,7 @@ impl IParser for UseDirectiveParser {
             },
             pair_span,
         ))?;
+        let import_path_position = Position::from(&import_path_str);
 
         let import_path_str = import_path_str.as_str().trim_matches('"').to_string();
         let import_path = Path::new(&import_path_str);
@@ -64,6 +67,11 @@ impl IParser for UseDirectiveParser {
             }
         };
 
-        Ok(Node::UseDirective(component_name.clone(), import_path.to_path_buf(), Box::new(component_node)))
+        Ok(Node::UseDirective(
+            component_name.clone(),
+            (import_path.to_path_buf(), import_path_position),
+            Box::new(component_node),
+            position,
+        ))
     }
 }
