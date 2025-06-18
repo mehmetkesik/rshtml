@@ -5,7 +5,7 @@ pub mod config;
 mod error;
 pub mod functions;
 mod node;
-mod parser;
+pub mod parser;
 #[cfg(test)]
 mod tests;
 pub mod traits;
